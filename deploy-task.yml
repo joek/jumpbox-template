@@ -1,8 +1,13 @@
 platform: linux
-image: docker:///busybox
+image: docker:///blendle/aws-cli
 
 inputs:
 - name: jumpbox-template
 
 run:
   path: ./jumpbox-template/deploy-task.sh
+
+params:
+  AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+  AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+  AWS_DEFAULT_REGION: us-east-1
