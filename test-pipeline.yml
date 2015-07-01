@@ -1,0 +1,14 @@
+---
+jobs:
+- name: deploy
+  public: true
+  plan:
+  - get: jumpbox-template
+  - task: deploy
+    file: jumpbox-template/deploy-task.yml
+
+resources:
+- name: jumpbox-template
+  type: git
+  source:
+    uri: https://github.com/joek/jumpbox-template.git
