@@ -1,0 +1,192 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Setup hybris default VPC",
+
+  "Parameters" : {
+    "BoshNetworkCidrBlock" : {
+      "Type" : "String",
+      "Default" : "10.0.1.0/24",
+      "Description" : "Enter CIDR Block for private bosh network. This setting is depending on the VPC Network range."
+    },
+    "JumpboxNetworkCidrBlock" : {
+      "Type" : "String",
+      "Default" : "10.0.0.0/24",
+      "Description" : "Enter CIDR Block for public Jumpbox Network. This setting is depending on the VPC Network range."
+    },
+    "VPCCidrBlock" : {
+      "Type" : "String",
+      "Default" : "10.0.0.0/16",
+      "Description" : "Enter CIDR Block for VPC. Note it should not collide with any existing VPC to be able to connect them later on."
+    },
+    "VPCName" : {
+      "Type" : "String",
+      "Default" : "Default-VPC",
+      "Description" : "Enter name of VPC"
+    }
+  },
+
+  "Mappings" : {
+  },
+
+  "Conditions" : {
+  },
+
+  "Resources" : {
+    "VPC1" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+         "CidrBlock" : { "Ref" : "VPCCidrBlock" },
+         "EnableDnsSupport" : true,
+         "EnableDnsHostnames" : true,
+         "InstanceTenancy" : "default",
+         "Tags" : [
+           {
+             "Key" : "Name",
+             "Value" : { "Ref" : "VPCName" }
+          }
+         ]
+      }
+    },
+    "DefaultRouter" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+         "VpcId" : {"Ref" : "VPC1"},
+         "Tags" : [ { "Key": "Name", "Value" : "default" } ]
+      }
+    },
+    "PublicRouter" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+         "VpcId" : {"Ref" : "VPC1"},
+         "Tags" : [ { "Key": "Name", "Value" : "public" } ]
+      }
+    },
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [ { "Key": "Name", "Value" : "gateway" } ]
+      }
+    },
+    "GatewayAttachment" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+          "InternetGatewayId" : {"Ref" : "InternetGateway"},
+          "VpcId" : {"Ref" : "VPC1"}
+       }
+    },
+    "InternetGatewayRoute" : {
+       "Type" : "AWS::EC2::Route",
+       "Properties" : {
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "GatewayId" : { "Ref" : "InternetGateway" },
+          "RouteTableId" : { "Ref" : "PublicRouter"}
+       },
+       "DependsOn" : [ "InternetGateway" ]
+    },
+    "JumpboxSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+         "GroupDescription" : "Security group for jumpboxes",
+         "SecurityGroupEgress" : [
+           {
+             "CidrIp" : "0.0.0.0/0",
+             "IpProtocol" : "-1"
+           }
+         ],
+         "SecurityGroupIngress" : [
+           {
+             "IpProtocol" : "tcp",
+             "FromPort" : 22,
+             "ToPort" : 22,
+             "CidrIp" : "0.0.0.0/0"
+           }
+         ],
+         "Tags" :  [ { "Key": "Name", "Value" : "jumpbox" } ],
+         "VpcId" : {"Ref" : "VPC1"}
+      }
+    },
+    "BoshSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+         "GroupDescription" : "Security group for bosh",
+         "SecurityGroupEgress" : [
+           {
+             "CidrIp" : "0.0.0.0/0",
+             "IpProtocol" : "-1"
+           }
+         ],
+         "SecurityGroupIngress" : [
+           {
+             "IpProtocol" : "tcp",
+             "FromPort" : 22,
+             "ToPort" : 22,
+             "SourceSecurityGroupId": { "Ref" : "JumpboxSecurityGroup" }
+           },
+           {
+             "IpProtocol" : "tcp",
+             "FromPort" : 6868,
+             "ToPort" : 6868,
+             "SourceSecurityGroupId": { "Ref" : "JumpboxSecurityGroup" }
+           },
+           {
+             "IpProtocol" : "tcp",
+             "FromPort" : 25555,
+             "ToPort" : 25555,
+             "SourceSecurityGroupId": { "Ref" : "JumpboxSecurityGroup" }
+           }
+         ],
+         "Tags" :  [ { "Key": "Name", "Value" : "bosh" } ],
+         "VpcId" : {"Ref" : "VPC1"}
+      }
+    },
+    "BoshSecurityGroupRule" : {
+         "Type" : "AWS::EC2::SecurityGroupIngress",
+         "Properties" : {
+             "GroupId" : { "Ref" : "BoshSecurityGroup" },
+             "IpProtocol" : "-1",
+             "SourceSecurityGroupId" : { "Ref" : "BoshSecurityGroup" }
+         },
+         "DependsOn" : "BoshSecurityGroup"
+     },
+     "JumpboxSubnet" : {
+          "Type" : "AWS::EC2::Subnet",
+          "Properties" : {
+              "AvailabilityZone" : "us-east-1b",
+              "CidrBlock" : { "Ref": "JumpboxNetworkCidrBlock" },
+              "MapPublicIpOnLaunch" : false,
+              "Tags" : [ { "Key": "Name", "Value" : "jumpbox1" } ],
+              "VpcId" : { "Ref" : "VPC1" }
+          }
+      },
+      "JumpboxSubnetRouteAssociation" : {
+         "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+         "Properties" : {
+            "RouteTableId" : { "Ref" : "PublicRouter" },
+            "SubnetId" : { "Ref" : "JumpboxSubnet" }
+         },
+         "DependsOn" : [ "PublicRouter", "JumpboxSubnet" ]
+      },
+      "BoshSubnet" : {
+           "Type" : "AWS::EC2::Subnet",
+           "Properties" : {
+               "AvailabilityZone" : "us-east-1b",
+               "CidrBlock" : { "Ref": "BoshNetworkCidrBlock" },
+               "MapPublicIpOnLaunch" : false,
+               "Tags" : [ { "Key": "Name", "Value" : "bosh" } ],
+               "VpcId" : { "Ref" : "VPC1" }
+           }
+       },
+       "BoshSubnetRouteAssociation" : {
+          "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties" : {
+             "RouteTableId" : { "Ref" : "DefaultRouter" },
+             "SubnetId" : { "Ref" : "BoshSubnet" }
+          },
+          "DependsOn" : [ "DefaultRouter", "BoshSubnet" ]
+       }
+  },
+
+  "Outputs" : {
+  }
+}

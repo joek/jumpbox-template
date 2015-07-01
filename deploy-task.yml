@@ -1,0 +1,8 @@
+platform: linux
+image: docker:///busybox
+
+inputs:
+- name: jumpbox-template
+
+run:
+  path: ./jumpbox-template/deploy-task.sh
