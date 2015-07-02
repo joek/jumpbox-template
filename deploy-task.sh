@@ -9,11 +9,16 @@
 #   ParameterKey=VPCName,ParameterValue=${STACK_NAME} \
 #   ParameterKey=VPCCidrBlock,ParameterValue=${VPC_CIDR_BLOCK}
 
-
-
 getStatus() {
-  aws cloudformation describe-stacks --stack-name ${STACK_NAME}
+  aws cloudformation describe-stacks --stack-name ${STACK_NAME} | grep StackStatus | sed "s/.*: \"//" | sed "s/\",//"
 }
 
 
-getStatus
+
+echo "Get stack"
+aws cloudformation describe-stacks --stack-name ${STACK_NAME}
+
+
+
+echo "Get status"
+status$(getStatus)
