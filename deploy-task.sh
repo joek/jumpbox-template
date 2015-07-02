@@ -21,4 +21,4 @@ aws cloudformation describe-stacks --stack-name ${STACK_NAME}
 
 
 echo "Get status"
-status$(getStatus)
+getStatus
