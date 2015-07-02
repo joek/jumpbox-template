@@ -141,7 +141,7 @@
              "SourceSecurityGroupId": { "Ref" : "JumpboxSecurityGroup" }
            }
          ],
-         "Tags" :  [ { "Key": "Name", "Value" : "bosh" } ],
+         "Tags" :  [ { "Key": "Name", "Value" : "microbosh" } ],
          "VpcId" : {"Ref" : "VPC1"}
       }
     },
