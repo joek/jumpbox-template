@@ -10,6 +10,11 @@
 #   ParameterKey=VPCCidrBlock,ParameterValue=${VPC_CIDR_BLOCK}
 
 getStatus() {
+  aws cloudformation describe-stacks --stack-name ${STACK_NAME} > /dev/null 2>&1
+  if [ $? -ne 0 ]
+    echo "NOT_CREATED"
+    return 0
+  fi
   aws cloudformation describe-stacks --stack-name ${STACK_NAME} | grep StackStatus | sed "s/.*: \"//" | sed "s/\",//"
 }
 
