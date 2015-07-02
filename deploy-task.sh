@@ -1,8 +1,8 @@
 #!/bin/sh
 
-aws cloudformation list-stacks
+
 aws cloudformation create-stack \
-  --stack-name ${STACK_NAME} --template-body file://./template.json \
+  --stack-name ${STACK_NAME} --template-body file://jumpbox-template/template.json \
   --parameters \
   ParameterKey=BoshNetworkCidrBlock,ParameterValue=${BOSH_NETWORK_CIDR_BLOCK} \
   ParameterKey=JumpboxNetworkCidrBlock,ParameterValue=${JUMPBOX_NETWORK_CIDR_BLOCK} \
@@ -12,4 +12,4 @@ aws cloudformation create-stack \
 
 
 
-  
+  aws cloudformation list-stacks
