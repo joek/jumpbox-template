@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-parameters=ParameterKey=BoshNetworkCidrBlock,ParameterValue=${BOSH_NETWORK_CIDR_BLOCK} ParameterKey=JumpboxNetworkCidrBlock,ParameterValue=${JUMPBOX_NETWORK_CIDR_BLOCK} ParameterKey=VPCName,ParameterValue=${STACK_NAME} ParameterKey=VPCCidrBlock,ParameterValue=${VPC_CIDR_BLOCK}
+parameters=ParameterKey=BoshNetworkCidrBlock,ParameterValue=${BOSH_NETWORK_CIDR_BLOCK} ParameterKey=JumpboxNetworkCidrBlock,ParameterValue=${JUMPBOX_NETWORK_CIDR_BLOCK} ParameterKey=VPCName,ParameterValue=${STACK_NAME} ParameterKey=VPCCidrBlock,ParameterValue=${VPC_CIDR_BLOCK} ParameterKey=SSHKeyName,ParameterValue=${SSH_KEY_NAME}
 
 getStatus() {
   aws cloudformation describe-stacks --stack-name ${STACK_NAME} > /dev/null 2>&1
@@ -12,7 +12,6 @@ getStatus() {
   fi
   aws cloudformation describe-stacks --stack-name ${STACK_NAME} | grep StackStatus | sed "s/.*: \"//" | sed "s/\",//" | sed "s/.*_//"
 }
-
 
 
 echo "Get status"

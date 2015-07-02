@@ -23,6 +23,11 @@
       "Type" : "String",
       "Default" : "Default-VPC",
       "Description" : "Enter name of VPC"
+    },
+    "SSHKeyName" : {
+      "Type" : "String",
+      "Default" : "",
+      "Description" : "Please create an EC2 Key and add key reference here."
     }
   },
 
@@ -184,7 +189,27 @@
              "SubnetId" : { "Ref" : "BoshSubnet" }
           },
           "DependsOn" : [ "DefaultRouter", "BoshSubnet" ]
+       },
+       "Jumpbox" : {
+         "Type" : "AWS::EC2::Instance",
+         "Properties" : {
+            "AvailabilityZone" : "us-east-1b",
+            "DisableApiTermination" : false,
+            "ImageId" : "ami-d05e75b8",
+            "InstanceType" : "t2.micro",
+            "KeyName" : { "Ref" : "SSHKeyName" },
+            "SecurityGroupIds" : [ { "Ref" : "JumpboxSecurityGroup"} ],
+            "SubnetId" : { "Ref" : "JumpboxSubnet" },
+            "Tags" : [ { "Key": "Name", "Value" : "jumpbox" }  ]
+         }
+      },
+      "JumpboxEIP" : {
+       "Type" : "AWS::EC2::EIP",
+       "Properties" : {
+          "InstanceId" : { "Ref" : "Jumpbox" },
+          "Domain" : "vpc"
        }
+    }
   },
 
   "Outputs" : {
