@@ -4,6 +4,7 @@ jobs:
   public: true
   plan:
   - get: jumpbox-template
+    trigger: true
   - task: deploy
     file: jumpbox-template/deploy-task.yml
     config:
